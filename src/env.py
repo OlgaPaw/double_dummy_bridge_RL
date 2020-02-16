@@ -5,7 +5,8 @@ from typing import Dict, Tuple
 
 import gym
 
-from src.models import Card, Deal, GameState
+from src.agents import Agent
+from src.models import Card, Deal, GameState, Player
 
 # Types declaration
 Observation = Dict
@@ -42,13 +43,18 @@ class BridgeEnv(gym.Env):
         })
         self.deal: Deal = None
         self.state: GameState = None
+        self.opponent: Agent = None
 
-    def setup(self, deal: Deal) -> None:
+    def setup(self, deal: Deal, opponent: Agent) -> None:
         self.deal = deal
+        self.opponent = opponent
         self.state = GameState.from_deal(deal)
 
     def reset(self) -> None:
         self.state = GameState.from_deal(self.deal)
+        if self.state.current_player == Player.WEST or self.state.current_player == Player.EAST:
+            opponent_card = Card(self.opponent.move(self.state))
+            self._move_and_get_reward(opponent_card)
 
     def step(self, action: Card) -> Tuple[Observation, Reward, Done, Info]:
         assert self.deal, "please run setup before learning"
@@ -58,14 +64,20 @@ class BridgeEnv(gym.Env):
         if not self._action_is_valid(card):
             return self._state_to_observation(), Rewards.INVALID_MOVE.value, False, 'Invalid move'
 
-        reward, done = self._update_state(card)
-        return self._state_to_observation(), reward, done, None
+        reward, done = self._move_and_get_reward(card)
+        info = 'Player move'
+        if not reward:  # trick not finisehd
+            opponent_card = self.opponent.move(self.state)
+            reward, done = self._move_and_get_reward(opponent_card)
+            reward = -reward
+            info = 'Opponent move'
+        return self._state_to_observation(), reward, done, info
 
-    def _update_state(self, card: Card) -> Tuple[Reward, Done]:
+    def _move_and_get_reward(self, card: Card) -> Tuple[Reward, Done]:
         self.state.trick.add_card(card, self.state.current_player)
         self.state.player_hand.remove(card)
-
         done = not self.state.any_hand_not_empty
+
         if self.state.trick.full:
             winner = self.state.trick.winner
             current_pair_won = winner == self.state.current_player or winner == self.state.current_player.partner

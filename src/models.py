@@ -1,9 +1,11 @@
+from copy import deepcopy
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Dict, Iterable, List, Optional, Set
 
 COLORS = 'CDHS'
-VALUES = {8: 'T', 9: 'J', 10: 'Q', 11: 'K', 12: 'A'}
+VALUES_MAP = {8: 'T', 9: 'J', 10: 'Q', 11: 'K', 12: 'A'}
+NAMES_MAP = dict(zip(VALUES_MAP.values(), VALUES_MAP.keys()))
 
 
 class TrickFullException(Exception):
@@ -64,10 +66,17 @@ class Card(int):
 
     @property
     def value_str(self):
-        return VALUES.get(self, str(self + 2))
+        return VALUES_MAP.get(self, str(self + 2))
 
     def __str__(self):
-        return f'{self.value_str}{self.color}'
+        return f'{self.color.value}{self.value_str}'
+
+    @staticmethod
+    def from_str(data: str):
+        color_str, value_str = data
+        value = NAMES_MAP[value_str] if value_str in NAMES_MAP else int(value_str) - 2
+        color_id = Color(color_str).id
+        return Card(color_id * 13 + value)
 
 
 Hand = Set[Card]  # max len 13
@@ -115,7 +124,7 @@ class Trick:
             self.cards.append(card)
 
     def clear(self):
-        self.cards = None
+        self.cards, self.leader = None, None
 
     @property
     def winning_card(self) -> Optional[Card]:
@@ -127,9 +136,11 @@ class Trick:
 
     @property
     def winner(self) -> Player:
-        winning_card_id = self.cards.index(self.winning_card) if self.winning_card else None
+        winning_card_id = self.cards.index(self.winning_card) if self.winning_card is not None else -1
+        if winning_card_id < 0:
+            return None
         winner = self.leader
-        for _ in range(winning_card_id + 1):
+        for _ in range(winning_card_id):
             winner = winner.next
         return winner
 
@@ -178,7 +189,7 @@ class GameState:
     def from_deal(deal: Deal):
         return GameState(
             current_player=deal.leader,
-            hands=deal.hands,
+            hands=deepcopy(deal.hands),
             trump=deal.trump,
             play_type=PlayType.DEFENCE,  # defence always start
             trick=Trick(deal.trump)
@@ -214,9 +225,10 @@ class GameState:
 
     @property
     def any_hand_not_empty(self):
-        return any(
-            len(self.player_hand),
-            len(self.left_opponent_hand),
-            len(self.partner_hand),
-            len(self.right_opponent_hand),
-        )
+        return any((
+            len(self.player_hand), len(self.left_opponent_hand), len(self.partner_hand), len(self.right_opponent_hand)
+        ))
+
+
+def hand_factory(cards: Iterable[str]) -> Set[Card]:
+    return {Card.from_str(item) for item in cards}
