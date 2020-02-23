@@ -66,7 +66,7 @@ class Card(int):
 
     @property
     def value_str(self):
-        return VALUES_MAP.get(self, str(self + 2))
+        return VALUES_MAP.get(self.value, str(self.value + 2))
 
     def __str__(self):
         return f'{self.color.value}{self.value_str}'
@@ -228,6 +228,16 @@ class GameState:
         return any((
             len(self.player_hand), len(self.left_opponent_hand), len(self.partner_hand), len(self.right_opponent_hand)
         ))
+
+    def __str__(self):
+        return (
+            f'{self.trump.value}'
+            f',{"".join(str(card) for card in self.trick.cards or [])}'
+            f',{"".join(str(card) for card in self.player_hand or [])}'
+            f',{"".join(str(card) for card in self.left_opponent_hand or [])}'
+            f',{"".join(str(card) for card in self.partner_hand or [])}'
+            f',{"".join(str(card) for card in self.right_opponent_hand or [])}'
+        )
 
 
 def hand_factory(cards: Iterable[str]) -> Set[Card]:

@@ -12,7 +12,7 @@ from src.models import Card, Deal, GameState, Player
 Observation = Dict
 Reward = float
 Done = bool
-Info = Dict
+Info = str
 
 DECK_SIZE = 52
 CARDS_FOR_PLAYER = 13
@@ -24,6 +24,7 @@ TRICK = [DECK_SIZE] * TRICK_SIZE
 
 class Rewards(Enum):
     INVALID_MOVE = -float('inf')
+    VALID_MOVE = 0.1
     TRICK_WON = 1.0
     TRICK_LOST = -1.0
     OTHER = 0
@@ -63,19 +64,18 @@ class BridgeEnv(gym.Env):
 
         if not self._action_is_valid(card):
             return self._state_to_observation(), Rewards.INVALID_MOVE.value, False, 'Invalid move'
-
-        reward, done = self._move_and_get_reward(card)
-        info = 'Player move'
-        if not reward:  # trick not finisehd
-            opponent_card = self.opponent.move(self.state)
-            reward, done = self._move_and_get_reward(opponent_card)
+        info = opponent_move_info = ''
+        reward, done, info = self._move_and_get_reward(card)
+        if not done and self.state.current_player == Player.WEST or self.state.current_player == Player.EAST:
+            opponent_card = Card(self.opponent.move(self.state))
+            reward, done, opponent_move_info = self._move_and_get_reward(opponent_card)
             reward = -reward
-            info = 'Opponent move'
-        return self._state_to_observation(), reward, done, info
+        return self._state_to_observation(), reward, done, "".join([info, opponent_move_info])
 
-    def _move_and_get_reward(self, card: Card) -> Tuple[Reward, Done]:
+    def _move_and_get_reward(self, card: Card) -> Tuple[Reward, Done, Info]:
         self.state.trick.add_card(card, self.state.current_player)
         self.state.player_hand.remove(card)
+        info = f'{self.state.current_player.value}:{str(card)}'
         done = not self.state.any_hand_not_empty
 
         if self.state.trick.full:
@@ -84,10 +84,10 @@ class BridgeEnv(gym.Env):
             reward = Rewards.TRICK_WON.value if current_pair_won else Rewards.TRICK_LOST.value
             self.state.trick.clear()
             self.state.current_player = winner
-            return reward, done
+            return reward, done, info
         else:
             self.state.current_player = self.state.current_player.next
-            return Rewards.OTHER.value, done
+            return Rewards.VALID_MOVE.value, done, info
 
     def render(self, mode: str = "human") -> StringIO:
         outfile = StringIO() if mode == 'ansi' else sys.stdout
