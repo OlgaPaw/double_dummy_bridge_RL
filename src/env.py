@@ -1,3 +1,4 @@
+import random
 import sys
 from enum import Enum
 from io import StringIO
@@ -63,11 +64,14 @@ class BridgeEnv(gym.Env):
         card = Card(action)
 
         if not self._action_is_valid(card):
-            return self._state_to_observation(), Rewards.INVALID_MOVE.value, False, 'Invalid move'
+            return self._state_to_observation(), Rewards.INVALID_MOVE.value, False, '.'
         info = opponent_move_info = ''
         reward, done, info = self._move_and_get_reward(card)
-        if not done and self.state.current_player == Player.WEST or self.state.current_player == Player.EAST:
+        if not done and (self.state.current_player == Player.WEST or self.state.current_player == Player.EAST):
             opponent_card = Card(self.opponent.move(self.state))
+            # fallback to random card if opponent move is invalid
+            if Card(opponent_card) not in self.state.valid_moves:
+                opponent_card = random.sample(self.state.valid_moves, 1)[0]
             reward, done, opponent_move_info = self._move_and_get_reward(opponent_card)
             reward = -reward
         return self._state_to_observation(), reward, done, "".join([info, opponent_move_info])

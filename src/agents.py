@@ -7,6 +7,7 @@ from collections import defaultdict
 import numpy
 
 from src.models import GameState
+from src.network import InputPattern, load_model, model
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -38,7 +39,7 @@ class QLearnAgent(Agent):
         self.load()
 
     def move(self, state: GameState) -> int:
-        key = str(state)
+        key = self._state_to_input(state)
         #Update invalid actions:
         for action, _ in enumerate(self.q_table[key]):
             if action not in state.valid_moves:
@@ -49,7 +50,12 @@ class QLearnAgent(Agent):
 
         return int(numpy.argmax(self.q_table[key]))
 
-    def update_q(self, state_key: str, action: int, reward: float, new_state_key: str):
+    def _state_to_input(self, state: GameState):
+        return str(state)
+
+    def update_q(self, state: GameState, action: int, reward: float, new_state: GameState):
+        state_key = self._state_to_input(state)
+        new_state_key = self._state_to_input(new_state)
         old_q_value = self.q_table[state_key][action]
         next_max = numpy.max(self.q_table[new_state_key])
         new_q_value = (1 - self.learning_rate) * old_q_value \
@@ -69,3 +75,68 @@ class QLearnAgent(Agent):
 
         except:
             print(f'Data file {self.data_file} not found', sys.stderr)
+
+
+class DeepQLearnAgent(Agent):
+    # Implementing EpsGreedyPolicy
+    def __init__(self, learning_rate: float = 0.0, discount_factor: float = 0.0, rand_factor: float = 0.0):
+        self.learning_rate = learning_rate
+        self.rand_factor = rand_factor
+        self.discount_factor = discount_factor
+        self.model = None
+        self.data_file = f'src/q_models_data/deep_q_learn.h5'
+        self.load()
+
+    def move(self, state: GameState) -> int:
+        state_input = self._state_to_input(state)
+        q_values = self.model.predict(state_input)[0]
+        if self.learning_rate > 0 and random.random() < self.rand_factor:
+            card_in_hand = len(state.player_hand)
+            n_best = q_values.argsort()[card_in_hand:][::-1]
+            action = random.choice(n_best)
+        else:
+            action = int(numpy.argmax(q_values))
+        return action
+
+    def _state_to_input(self, state: GameState):
+        model_input = InputPattern(
+            trump=state.trump.id,
+            hand1=state.player_hand,
+            hand2=state.left_opponent_hand,
+            hand3=state.partner_hand,
+            hand4=state.right_opponent_hand,
+            trick=state.trick.cards,
+            trick_suite=state.trick.color.id if state.trick.color else -1
+        )
+        return model_input.get_array()
+
+    def update_q(self, state: GameState, action: int, reward: float, new_state: GameState):
+        state_input = self._state_to_input(state)
+        new_state_input = self._state_to_input(new_state)
+        old_q_values = self.model.predict(state_input)[0]
+        next_q_values = self.model.predict(new_state_input)[0]
+        next_max = numpy.max(next_q_values)
+        old_q_value = old_q_values[action]
+        new_q_value = (1 - self.learning_rate) * old_q_value \
+                    + self.learning_rate * (reward + self.discount_factor * next_max)
+        rewards = self._get_state_rewards(state, old_q_values, action, new_q_value)
+        self.model.fit(state_input, rewards, steps_per_epoch=5, verbose=False)
+
+    def _get_state_rewards(self, state: GameState, old_q_values: numpy.ndarray, action: int, new_q_value: float):
+        reward_invalid = -13
+        rewards = old_q_values
+        rewards[action] = new_q_value
+        for index, _ in enumerate(rewards):
+            if index not in state.valid_moves:
+                rewards[index] = reward_invalid
+        return rewards.reshape(1, len(rewards))
+
+    def save(self):
+        self.model.save(self.data_file)
+
+    def load(self):
+        try:
+            self.model = load_model(self.data_file)
+        except OSError:
+            print(f'Data file {self.data_file} not found', sys.stderr)
+            self.model = model()
