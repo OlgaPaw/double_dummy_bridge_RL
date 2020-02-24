@@ -124,11 +124,14 @@ class DeepQLearnAgent(Agent):
 
     def _get_state_rewards(self, state: GameState, old_q_values: numpy.ndarray, action: int, new_q_value: float):
         reward_invalid = -13
+        raward_valid = 1
         rewards = old_q_values
-        rewards[action] = new_q_value
         for index, _ in enumerate(rewards):
             if index not in state.valid_moves:
                 rewards[index] = reward_invalid
+            else:
+                rewards[index] = raward_valid
+        # rewards[action] = new_q_value
         return rewards.reshape(1, len(rewards))
 
     def save(self):

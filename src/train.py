@@ -45,17 +45,17 @@ def learn(env: BridgeEnv, player: Agent, opponent: Agent, episodes=10000):
 if __name__ == '__main__':
     env: BridgeEnv = gym.make('Bridge-v0')
 
-    player = DeepQLearnAgent(learning_rate=0.5, discount_factor=0.9, rand_factor=0.1)
+    player = DeepQLearnAgent(learning_rate=1, discount_factor=0, rand_factor=0)
     opponent = DeepQLearnAgent()
     env.setup(player_deal, opponent)
     values = {0: {'invalid_actions': [], 'rewards': []}, 1: {'invalid_actions': [], 'rewards': []}}
 
     with open(f'results/offence-{player.__class__.__name__}-{player.__class__.__name__}.csv', 'w') as offence:
         with open(f'results/defence-{player.__class__.__name__}-{player.__class__.__name__}.csv', 'w') as defence:
-            for episode, invalid_actions, reward, cards_played in learn(env, player, opponent, 10):
+            for episode, invalid_actions, reward, cards_played in learn(env, player, opponent, 200):
                 game_file = offence if episode % 2 else defence
 
-                # print(episode // 2, invalid_actions, reward, "".join(cards_played))
+                print(episode // 2, invalid_actions, reward, "".join(cards_played))
                 values[episode % 2]['invalid_actions'].append(invalid_actions)
                 values[episode % 2]['rewards'].append(reward)
                 csv.writer(game_file).writerow((episode // 2, invalid_actions, reward, "".join(cards_played)))

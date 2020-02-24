@@ -24,7 +24,7 @@ TRICK = [DECK_SIZE] * TRICK_SIZE
 
 
 class Rewards(Enum):
-    INVALID_MOVE = -float('inf')
+    INVALID_MOVE = -13
     VALID_MOVE = 0.1
     TRICK_WON = 1.0
     TRICK_LOST = -1.0
