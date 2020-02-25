@@ -72,8 +72,9 @@ class BridgeEnv(gym.Env):
             # fallback to random card if opponent move is invalid
             if Card(opponent_card) not in self.state.valid_moves:
                 opponent_card = random.sample(self.state.valid_moves, 1)[0]
-            reward, done, opponent_move_info = self._move_and_get_reward(opponent_card)
-            reward = -reward
+            opponent_reward, done, opponent_move_info = self._move_and_get_reward(opponent_card)
+            if opponent_reward != Rewards.VALID_MOVE.value:
+                reward = -opponent_reward
         return self._state_to_observation(), reward, done, "".join([info, opponent_move_info])
 
     def _move_and_get_reward(self, card: Card) -> Tuple[Reward, Done, Info]:

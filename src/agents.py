@@ -120,11 +120,11 @@ class DeepQLearnAgent(Agent):
         new_q_value = (1 - self.learning_rate) * old_q_value \
                     + self.learning_rate * (reward + self.discount_factor * next_max)
         rewards = self._get_state_rewards(state, old_q_values, action, new_q_value)
-        self.model.fit(state_input, rewards, steps_per_epoch=5, verbose=False)
+        self.model.fit(state_input, rewards, steps_per_epoch=1, verbose=False)
 
     def _get_state_rewards(self, state: GameState, old_q_values: numpy.ndarray, action: int, new_q_value: float):
         reward_invalid = -13
-        raward_valid = 1
+        raward_valid = 0.1
         rewards = old_q_values
         for index, _ in enumerate(rewards):
             if index not in state.valid_moves:
