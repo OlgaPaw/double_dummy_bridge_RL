@@ -45,7 +45,7 @@ if __name__ == '__main__':
     for i in range(20):
         env: BridgeEnv = gym.make('Bridge-v0')
 
-        player = DeepQLearnAgent(learning_rate=0.2, discount_factor=0.3, rand_factor=0.2)
+        player = DeepQLearnAgent(learning_rate=0.2, discount_factor=0.3, rand_factor=0)
         opponent = DeepQLearnAgent()
 
         env.setup(player_deal, opponent)
