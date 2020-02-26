@@ -50,13 +50,16 @@ class BridgeEnv(gym.Env):
     def setup(self, deal: Deal, opponent: Agent) -> None:
         self.deal = deal
         self.opponent = opponent
-        self.state = GameState.from_deal(deal)
+        self.reset()
 
     def reset(self) -> None:
         self.state = GameState.from_deal(self.deal)
         if self.state.current_player == Player.WEST or self.state.current_player == Player.EAST:
             opponent_card = Card(self.opponent.move(self.state))
-            self._move_and_get_reward(opponent_card)
+            if opponent_card not in self.state.valid_moves:
+                opponent_card = random.sample(self.state.valid_moves, 1)[0]
+            _, _, info = self._move_and_get_reward(opponent_card)
+            return info
 
     def step(self, action: Card) -> Tuple[Observation, Reward, Done, Info]:
         assert self.deal, "please run setup before learning"
@@ -67,7 +70,7 @@ class BridgeEnv(gym.Env):
             return self._state_to_observation(), Rewards.INVALID_MOVE.value, False, '.'
         info = opponent_move_info = ''
         reward, done, info = self._move_and_get_reward(card)
-        if not done and (self.state.current_player == Player.WEST or self.state.current_player == Player.EAST):
+        while not done and (self.state.current_player == Player.WEST or self.state.current_player == Player.EAST):
             opponent_card = Card(self.opponent.move(self.state))
             # fallback to random card if opponent move is invalid
             if Card(opponent_card) not in self.state.valid_moves:

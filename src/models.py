@@ -52,7 +52,10 @@ class Trump(Enum):
 
     @property
     def id(self):
-        return COLORS.index(self.value)
+        try:
+            return COLORS.index(self.value)
+        except ValueError:
+            return -1
 
 
 class Card(int):

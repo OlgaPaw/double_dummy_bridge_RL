@@ -19,6 +19,7 @@ def get_next_deal():
 
 
 def learn(env: BridgeEnv, player: Agent, opponent: Agent, episodes=10000):
+    max_invalid = 200
     for i in range(episodes):
         done = False
         env.setup(next(get_next_deal()), opponent)
@@ -35,51 +36,59 @@ def learn(env: BridgeEnv, player: Agent, opponent: Agent, episodes=10000):
                 invalid_actions += 1
             cards_played.append(info)
             player.update_q(state, action, reward, env.state)
-            if done:
+            if done or invalid_actions > max_invalid:
                 yield i, invalid_actions, cumulative_reward, cards_played
                 break
-    player.save()
-    env.close()
 
 
 if __name__ == '__main__':
-    env: BridgeEnv = gym.make('Bridge-v0')
+    for i in range(20):
+        env: BridgeEnv = gym.make('Bridge-v0')
 
-    player = DeepQLearnAgent(learning_rate=1, discount_factor=0, rand_factor=0)
-    opponent = DeepQLearnAgent()
-    env.setup(player_deal, opponent)
-    values = {0: {'invalid_actions': [], 'rewards': []}, 1: {'invalid_actions': [], 'rewards': []}}
+        player = DeepQLearnAgent(learning_rate=0.2, discount_factor=0.3, rand_factor=0.2)
+        opponent = DeepQLearnAgent()
 
-    with open(f'results/offence-{player.__class__.__name__}-{player.__class__.__name__}.csv', 'w') as offence:
-        with open(f'results/defence-{player.__class__.__name__}-{player.__class__.__name__}.csv', 'w') as defence:
-            for episode, invalid_actions, reward, cards_played in learn(env, player, opponent, 200):
-                game_file = offence if episode % 2 else defence
+        env.setup(player_deal, opponent)
+        values = {0: {'invalid_actions': [], 'rewards': []}, 1: {'invalid_actions': [], 'rewards': []}}
+        with open(f'results/{i}offence-{player.__class__.__name__}-{player.__class__.__name__}.csv', 'w') as offence:
+            with open(
+                f'results/{i}defence-{player.__class__.__name__}-{player.__class__.__name__}.csv', 'w'
+            ) as defence:
+                for episode, invalid_actions, reward, cards_played in learn(env, player, opponent, 100):
+                    game_file = offence if episode % 2 else defence
 
-                print(episode // 2, invalid_actions, reward, "".join(cards_played))
-                values[episode % 2]['invalid_actions'].append(invalid_actions)
-                values[episode % 2]['rewards'].append(reward)
-                csv.writer(game_file).writerow((episode // 2, invalid_actions, reward, "".join(cards_played)))
+                    print(episode // 2, invalid_actions, reward, "".join(cards_played))
+                    values[episode % 2]['invalid_actions'].append(invalid_actions)
+                    values[episode % 2]['rewards'].append(reward)
+                    csv.writer(game_file).writerow((episode // 2, invalid_actions, reward, "".join(cards_played)))
 
-    print("################SUMMARY############")
-    print("OFFENCE")
-    print(
-        f"invalid min:{min(values[0]['invalid_actions'])} "
-        f"max:{max(values[0]['invalid_actions'])} "
-        f"mean:{statistics.mean(values[0]['invalid_actions'])} "
-    )
-    print(
-        f"rewards min:{min(values[0]['rewards'])} "
-        f"max:{max(values[0]['rewards'])} "
-        f"mean:{statistics.mean(values[0]['rewards'])} "
-    )
-    print("DEFENCE")
-    print(
-        f"invalid min:{min(values[1]['invalid_actions'])} "
-        f"max:{max(values[1]['invalid_actions'])} "
-        f"mean:{statistics.mean(values[1]['invalid_actions'])} "
-    )
-    print(
-        f"rewards min:{min(values[1]['rewards'])} "
-        f"max:{max(values[1]['rewards'])} "
-        f"mean:{statistics.mean(values[1]['rewards'])} "
-    )
+        print("################SUMMARY############")
+        print("OFFENCE")
+        print(
+            f"invalid min:{min(values[0]['invalid_actions'])} "
+            f"max:{max(values[0]['invalid_actions'])} "
+            f"mean:{statistics.mean(values[0]['invalid_actions'])} "
+        )
+        print(
+            f"rewards min:{min(values[0]['rewards'])} "
+            f"max:{max(values[0]['rewards'])} "
+            f"mean:{statistics.mean(values[0]['rewards'])} "
+        )
+        print("DEFENCE")
+        print(
+            f"invalid min:{min(values[1]['invalid_actions'])} "
+            f"max:{max(values[1]['invalid_actions'])} "
+            f"mean:{statistics.mean(values[1]['invalid_actions'])} "
+        )
+        print(
+            f"rewards min:{min(values[1]['rewards'])} "
+            f"max:{max(values[1]['rewards'])} "
+            f"mean:{statistics.mean(values[1]['rewards'])} "
+        )
+
+        env.close()
+        # print("Save results? y/N")
+        # save = input()
+        # if save.lower() == "y":
+        player.save()
+        print("Saved")

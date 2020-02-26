@@ -22,13 +22,25 @@ opponent_deal = Deal(
     contract=Contract(4, Trump.SPADES),
 )
 
-other_deal = Deal(
-    #[Deal "S:QT95.Q963.K.K975 AK87.K4.QJT62.AQ 62.AJT7.54.J8643 J43.852.A9873.T2"]
-    hand_n=hand_factory(['SQ', 'ST', 'S9', 'S5', 'HQ', 'H9', 'H6', 'H3', 'DK', 'CK', 'C9', 'C7', 'C5']),
-    hand_e=hand_factory(['SA', 'SK', 'S8', 'S7', 'HK', 'H4', 'DQ', 'DJ', 'DT', 'D6', 'D2', 'CA', 'CQ']),
-    hand_s=hand_factory(['S6', 'S2', 'HA', 'HJ', 'HT', 'H7', 'D6', 'D4', 'CJ', 'C8', 'C6', 'C4', 'C3']),
-    hand_w=hand_factory(['SJ', 'S4', 'S3', 'H8', 'H5', 'H2', 'DA', 'D9', 'D8', 'D7', 'D3', 'CT', 'C2']),
-    declarer=Player.WEST,
-    leader=Player.NORTH,
-    contract=Contract(3, Trump.NO_TRUMP),
+validation_deal_same_trump = Deal(
+    #[Deal "N:KQ4.843.J7.AKQ97 T2.Q7.AT98643.J5 J953.AJT92.Q2.T3 A876.K65.K5.8642"]
+    hand_n=hand_factory(['SK', 'SQ', 'S4', 'H8', 'H4', 'H3', 'DJ', 'D7', 'CA', 'CK', 'CQ', 'C9', 'C7']),
+    hand_e=hand_factory(['ST', 'S2', 'HQ', 'H7', 'DA', 'DT', 'D9', 'D8', 'D6', 'D4', 'D3', 'CJ', 'C5']),
+    hand_s=hand_factory(['SJ', 'S9', 'S5', 'S3', 'HA', 'HJ', 'HT', 'H9', 'H2', 'DQ', 'D2', 'CT', 'C3']),
+    hand_w=hand_factory(['SA', 'S8', 'S7', 'S6', 'HK', 'H6', 'H5', 'DK', 'D5', 'C8', 'C6', 'C4', 'C2']),
+    declarer=Player.NORTH,
+    leader=Player.EAST,
+    contract=Contract(3, Trump.SPADES),
+)
+
+
+validation_deal_other_trump = Deal(
+    #[Deal "N:KQ4.843.J7.AKQ97 T2.Q7.AT98643.J5 J953.AJT92.Q2.T3 A876.K65.K5.8642"]
+    hand_n=hand_factory(['SK', 'SQ', 'S4', 'H8', 'H4', 'H3', 'DJ', 'D7', 'CA', 'CK', 'CQ', 'C9', 'C7']),
+    hand_e=hand_factory(['ST', 'S2', 'HQ', 'H7', 'DA', 'DT', 'D9', 'D8', 'D6', 'D4', 'D3', 'CJ', 'C5']),
+    hand_s=hand_factory(['SJ', 'S9', 'S5', 'S3', 'HA', 'HJ', 'HT', 'H9', 'H2', 'DQ', 'D2', 'CT', 'C3']),
+    hand_w=hand_factory(['SA', 'S8', 'S7', 'S6', 'HK', 'H6', 'H5', 'DK', 'D5', 'C8', 'C6', 'C4', 'C2']),
+    declarer=Player.EAST,
+    leader=Player.SOUTH,
+    contract=Contract(3, Trump.DIAMONDS),
 )
