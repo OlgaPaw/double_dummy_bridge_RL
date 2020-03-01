@@ -173,11 +173,11 @@ class Deal:
 
     @property
     def defence_pair(self):
-        return 'NS' if self.declarer.value in 'NS' else 'WE'
+        return 'NS' if self.declarer.value in 'EW' else 'WE'
 
     @property
     def offence_pair(self):
-        return 'NS' if self.declarer.value not in 'NS' else 'WE'
+        return 'NS' if self.declarer.value not in 'EW' else 'WE'
 
 
 @dataclass

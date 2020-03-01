@@ -50,7 +50,7 @@ class BridgeEnv(gym.Env):
     def setup(self, deal: Deal, opponent: Agent) -> None:
         self.deal = deal
         self.opponent = opponent
-        self.reset()
+        return self.reset()
 
     def reset(self) -> None:
         self.state = GameState.from_deal(self.deal)

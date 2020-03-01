@@ -17,8 +17,8 @@ opponent_deal = Deal(
     hand_s=hand_factory(['ST', 'S6', 'HQ', 'HT', 'H3', 'DK', 'DJ', 'DT', 'D6', 'D5', 'D4', 'CT', 'C2']),
     hand_w=hand_factory(['SA', 'SQ', 'S8', 'S7', 'S5', 'H9', 'H6', 'H2', 'D7', 'CA', 'CJ', 'C8', 'C5']),
     hand_n=hand_factory(['S4', 'S2', 'HA', 'HK', 'H8', 'H7', 'H5', 'DQ', 'D3', 'D2', 'CK', 'C9', 'C3']),
-    declarer=Player.SOUTH,
-    leader=Player.EAST,
+    declarer=Player.WEST,
+    leader=Player.NORTH,
     contract=Contract(4, Trump.SPADES),
 )
 

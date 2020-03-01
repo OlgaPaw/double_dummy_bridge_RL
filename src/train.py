@@ -19,13 +19,14 @@ def get_next_deal():
 
 
 def learn(env: BridgeEnv, player: Agent, opponent: Agent, episodes=10000):
-    max_invalid = 200
+    max_invalid = 50
+    deal_iterator = get_next_deal()
     for i in range(episodes):
         done = False
-        env.setup(next(get_next_deal()), opponent)
+        first_move = env.setup(next(deal_iterator), opponent)
         cumulative_reward = 0
         invalid_actions = 0
-        cards_played = []
+        cards_played = [first_move] if first_move else []
         while not done:
             state = deepcopy(env.state)
             action = player.move(state)
@@ -42,10 +43,10 @@ def learn(env: BridgeEnv, player: Agent, opponent: Agent, episodes=10000):
 
 
 if __name__ == '__main__':
-    for i in range(20):
+    for i in range(30):
         env: BridgeEnv = gym.make('Bridge-v0')
 
-        player = DeepQLearnAgent(learning_rate=0.2, discount_factor=0.3, rand_factor=0)
+        player = DeepQLearnAgent(learning_rate=0.2, discount_factor=0.4, rand_factor=0.1)
         opponent = DeepQLearnAgent()
 
         env.setup(player_deal, opponent)
@@ -54,7 +55,7 @@ if __name__ == '__main__':
             with open(
                 f'results/{i}defence-{player.__class__.__name__}-{player.__class__.__name__}.csv', 'w'
             ) as defence:
-                for episode, invalid_actions, reward, cards_played in learn(env, player, opponent, 100):
+                for episode, invalid_actions, reward, cards_played in learn(env, player, opponent, 200):
                     game_file = offence if episode % 2 else defence
 
                     print(episode // 2, invalid_actions, reward, "".join(cards_played))
@@ -87,8 +88,5 @@ if __name__ == '__main__':
         )
 
         env.close()
-        # print("Save results? y/N")
-        # save = input()
-        # if save.lower() == "y":
         player.save()
         print("Saved")
