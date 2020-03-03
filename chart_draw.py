@@ -79,7 +79,6 @@ if __name__ == "__main__":
     _, *folders = sys.argv
     data = {"offence": [], "defence": []}
     invalid_moves_while_learning(folders[1].split('/')[0])
-    invalid_moves_while_learning(folders[2].split('/')[0])
     validation_invalid(folders)
     validation_tricks_won(folders)
     matplotlib.pyplot.show()
