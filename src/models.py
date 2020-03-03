@@ -187,6 +187,8 @@ class GameState:
     trump: Trump
     play_type: PlayType
     trick: Trick
+    tricks_ns: int = 0
+    tricks_ew: int = 0
 
     @staticmethod
     def from_deal(deal: Deal):

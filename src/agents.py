@@ -136,7 +136,7 @@ class DeepQLearnAgent(Agent):
                 rewards[index] = reward_invalid
             else:
                 rewards[index] = raward_valid
-        # rewards[action] = new_q_value
+        rewards[action] = new_q_value
         return rewards.reshape(1, len(rewards))
 
     def save(self):

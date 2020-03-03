@@ -29,6 +29,8 @@ class Rewards(Enum):
     TRICK_WON = 1.0
     TRICK_LOST = -1.0
     OTHER = 0
+    MATCH_WON = 10
+    MATCH_LOST = -10
 
 
 class BridgeEnv(gym.Env):
@@ -70,6 +72,7 @@ class BridgeEnv(gym.Env):
             return self._state_to_observation(), Rewards.INVALID_MOVE.value, False, '.'
         info = opponent_move_info = ''
         reward, done, info = self._move_and_get_reward(card)
+
         while not done and (self.state.current_player == Player.WEST or self.state.current_player == Player.EAST):
             opponent_card = Card(self.opponent.move(self.state))
             # fallback to random card if opponent move is invalid
@@ -78,6 +81,13 @@ class BridgeEnv(gym.Env):
             opponent_reward, done, opponent_move_info = self._move_and_get_reward(opponent_card)
             if opponent_reward != Rewards.VALID_MOVE.value:
                 reward = -opponent_reward
+
+        if done:
+            if self.state.tricks_ns > self.state.tricks_ew:
+                reward = Rewards.MATCH_WON.value
+            elif self.state.tricks_ns < self.state.tricks_ew:
+                reward = Rewards.MATCH_LOST.value
+
         return self._state_to_observation(), reward, done, "".join([info, opponent_move_info])
 
     def _move_and_get_reward(self, card: Card) -> Tuple[Reward, Done, Info]:
@@ -88,6 +98,10 @@ class BridgeEnv(gym.Env):
 
         if self.state.trick.full:
             winner = self.state.trick.winner
+            if winner in [Player.NORTH, Player.SOUTH]:
+                self.state.tricks_ns += 1
+            else:
+                self.state.tricks_ew += 1
             current_pair_won = winner == self.state.current_player or winner == self.state.current_player.partner
             reward = Rewards.TRICK_WON.value if current_pair_won else Rewards.TRICK_LOST.value
             self.state.trick.clear()
